@@ -1,0 +1,48 @@
+AYOUB TRABELSI
+Email: ayoub@example.com | Phone: +216 95 000 000
+LinkedIn: https://linkedin.com/in/ayoub-trabelsi
+GitHub: https://github.com/ayoubtrabelsi
+Location: Tunis, Tunisia
+
+PROFESSIONAL SUMMARY
+Automation and industrial systems engineer with 3+ years of experience in PLC programming,
+supervision systems, and process optimization. Strong problem-solving mindset and proven
+ability to improve reliability, reduce downtime, and deliver measurable impact.
+
+TECHNICAL SKILLS
+- Automation: PLC, SCADA, HMI
+- Programming: Python, SQL, JavaScript
+- Tools: Git, Docker, Power BI
+- Methods: Agile, Scrum, Root Cause Analysis
+
+EXPERIENCE
+Automation Engineer | Company Name | 2022 - Present
+- Designed and deployed PLC logic for 4 production lines, reducing stoppages by 22%.
+- Implemented monitoring dashboards that improved incident response time by 35%.
+- Coordinated with electrical and mechanical teams to deliver projects on time and under budget.
+
+Junior Systems Engineer | Company Name | 2020 - 2022
+- Built maintenance workflows that reduced recurring faults by 18%.
+- Automated weekly performance reports, saving 5+ hours per week.
+
+PROJECTS
+Industrial Monitoring Dashboard
+- Built a real-time dashboard for machine KPIs and anomaly alerts.
+- Stack: Python, SQL, Power BI.
+
+Predictive Maintenance Prototype
+- Trained a simple ML model to predict potential machine failure from sensor data.
+- Result: improved early-warning capability by 20%.
+
+EDUCATION
+Master's Degree in Industrial Systems Engineering
+University Name | 2020
+
+CERTIFICATIONS
+- Siemens PLC Programming Fundamentals
+- Lean Six Sigma Yellow Belt
+
+LANGUAGES
+- Arabic: Native
+- French: Professional
+- English: Professional

@@ -1,0 +1,435 @@
+
+  1. Project Overview
+  This is a Recruitment Platform (PFE 2026) built with a modern React stack. It is designed to handle
+  three distinct user roles:
+   * Candidates: Can browse jobs, manage their profile, apply for positions, and track applications. 
+   * Companies (Recruiters): Can post jobs, review candidate applications, and generate reports.     
+   * Admins: Oversee users, view platform-wide statistics, and manage reports.
+
+  ---
+
+  2. Code Architecture & File Structure Review
+
+
+  Strengths
+   * Modular Organization: The folder structure is very clean, separating components by type (cards, 
+     forms, modals) and pages by role.
+   * State Management: The use of Redux Toolkit (RTK) and RTK Query (baseApi) is a professional      
+     choice that handles caching and API states efficiently.
+   * TypeScript Integration: The project uses TypeScript, which provides better developer experience 
+     and reduces runtime errors.
+
+
+  Weaknesses
+   * Routing Logic: There is a significant conflict between App.tsx, AppRoutes.tsx, and main.tsx.    
+   * Security: Routes are currently "open" to everyone; role-based protection is planned but not yet 
+     implemented.
+   * Consistency: There is a mix of axios and RTK Query for API calls, and role naming is
+     inconsistent across the codebase.
+
+  ---
+
+  3. Critical Corrections & Improvements Needed
+
+  A. Fix the Routing & Entry Point (Highest Priority)
+  In main.tsx, you have an invalid structure:
+
+
+   1 // main.tsx
+   2 <AppRoutes>
+   3   <App />
+   4 </AppRoutes>
+  AppRoutes returns a <Routes> element, which cannot wrap other components like that.
+   * Correction: Choose one source of truth for routes (preferably AppRoutes.tsx). App.tsx should    
+     only render AppRoutes.
+
+
+  B. Implement Role-Based Protection
+  Currently, RoleRoute.tsx is empty, and sensitive pages (like /admin/dashboard) are accessible to   
+  anyone.
+   * Correction: Implement RoleRoute to check the user's role from the Redux store. Wrap your routes 
+     in AppRoutes.tsx using this component.
+
+
+  C. Standardize API Calls
+   * Issue: Login.tsx uses raw axios, while the rest of the app uses RTK Query.
+   * Correction: Refactor Login.tsx to use the useLoginMutation hook from your authApi.ts. This      
+     ensures that the global loading/error states are handled consistently.
+
+
+  D. Synchronize Role Names
+  You have multiple naming conventions for roles:
+   * src/types/roles.ts: CANDIDATE, RECRUITER, ADMIN
+   * authApi.ts: candidate, recruiter, admin
+   * Login.tsx: CANDIDAT, ENTREPRISE, ADMIN
+   * Correction: Use a single source of truth (e.g., an Enum or constant) to avoid "invalid role"    
+     bugs.
+
+
+  E. Handle Page Refresh (Auth Persistence)
+  In authSlice.ts, you load the token from localStorage, but the user object becomes null upon       
+  refresh.
+   * Correction: Use jwt-decode (which is already in your package.json) to extract the user's role   
+     and ID from the token when the app initializes, or create an endpoint to fetch the current      
+     user's profile on startup.
+
+
+  F. Environment Variables
+  The API URL http://localhost:5000/api is hardcoded in several files.
+   * Correction: Use import.meta.env.VITE_API_URL to allow for easy switching between development and
+     production environments.
+
+
+  Summary of Recommended Next Steps
+   1. Clean up main.tsx and App.tsx to ensure routes render correctly.
+   2. Complete RoleRoute.tsx to lock down the dashboards.
+   3. Refactor the Login page to use RTK Query instead of direct axios.
+
+   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+ > Clean up main.tsx and App.tsx to ensure routes render correctly and follow react routing best     
+   practices to implement it, right now i added all my routes in src/routes/AppRoutes.tsx give me a  
+   step by step guide on how to implement role based route protection
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+✦ I will start by cleaning up main.tsx and App.tsx to establish a clean routing hierarchy and then   
+  provide a detailed guide for implementing role-based protection.
+
+
+  Step 1: Clean up the Entry Point (main.tsx)
+  Currently, main.tsx incorrectly nests <App /> inside <AppRoutes />. We will fix this so that App is
+  the main container.
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────╮    
+│ ✓  Edit src\main.tsx: ReactDOM.createRoot(document.g... => ReactDOM.createRoot(document.g...  │    
+│                                                                                               │    
+│ 11   <React.StrictMode>                                                                       │    
+│ 12     <Provider store={store}>                                                               │    
+│ 13       <BrowserRouter>                                                                      │    
+│ 14 -       <AppRoutes>                                                                        │    
+│ 14         <App />                                                                            │    
+│ 16 -       </AppRoutes>                                                                       │    
+│ 15       </BrowserRouter>                                                                     │    
+│ 16     </Provider>                                                                            │    
+│ 17   </React.StrictMode>                                                                      │    
+│                                                                                               │    
+│ ✓  Edit src\App.tsx: import { Routes, Route } from ... => import AppRoutes from "./route...   │    
+│                                                                                               │    
+│  1 - import { Routes, Route } from "react-router-dom";                                        │    
+│  1 + import AppRoutes from "./routes/AppRoutes";                                              │    
+│  2                                                                                            │    
+│  3 - import Home from "./pages/Home";                                                         │    
+│  4 - import RolePage from "./pages/RolePage";                                                 │    
+│  5 - import Login from "./pages/auth/Login";                                                  │    
+│  6 - import Register from "./pages/auth/Register";                                            │    
+│  7 - import ForgotPassword from "./pages/auth/ForgotPassword";                                │    
+│  8 -                                                                                          │    
+│  9 - import CandidateDashboard from "./pages/candidate/Dashboard";                            │    
+│ 10 - import CompanyDashboard from "./pages/company/Dashboard";                                │    
+│ 11 - import AdminDashboard from "./pages/admin/Dashboard";                                    │    
+│ 12 -                                                                                          │    
+│ 13 - import CandidateProfile from "./pages/candidate/Profile";                                │    
+│ 14 - import CandidateJobs from "./pages/candidate/Jobs";                                      │    
+│ 15 -                                                                                          │    
+│ 16 - import Notifications from "./pages/Notifications";                                       │    
+│ 17 - import Settings from "./pages/candidate/Settings";                                       │    
+│  3   function App() {                                                                         │    
+│  4     return (                                                                               │    
+│ ═════════════════════════════════════════════════════════════════════════════════════════════ │    
+│ 20 -     <Routes>                                                                             │    
+│ 21 -       <Route path="/" element={<Home />} />                                              │    
+│ 22 -                                                                                          │    
+│ 23 -       <Route path="/login/:role" element={<Login />} />                                  │    
+│ 24 -       <Route path="/register/:role" element={<Register />} />                            │    
+│ 25 -       <Route path="/forgot-password/:role" element={<ForgotPassword />} />               │    
+│ 26 -       <Route path="/candidate/dashboard" element={<CandidateDashboard />} />             │    
+│ 27 -       <Route path="/company/dashboard" element={<CompanyDashboard />} />                 │    
+│ 28 -       <Route path="/admin/dashboard" element={<AdminDashboard />} />                     │    
+│ 29 -       <Route path="/candidate/profile" element={<CandidateProfile />} />                 │    
+│ 30 -       <Route path="/candidate/jobs" element={<CandidateJobs />} />                       │    
+│ 31 -       <Route path="/notifications" element={<Notifications />} />                        │    
+│ 32 -       <Route path="/candidate/settings" element={<Settings />} />                        │    
+│ 33 -       <Route path="/:role" element={<RolePage />} />                                     │    
+│ 34 -     </Routes>                                                                            │    
+│  5 +     <div className="app-container">                                                      │    
+│  6 +       <AppRoutes />                                                                      │    
+│  7 +     </div>                                                                               │    
+│  8     );                                                                                     │    
+│  9   }                                                                                        │    
+│ 10                                                                                            │    
+╰───────────────────────────────────────────────────────────────────────────────────────────────╯    
+✦ I'll now provide a step-by-step guide for role-based route protection, utilizing your current      
+  structure.
+
+
+  Guide: Implementing Role-Based Route Protection
+
+  This implementation follows the pattern: Is the user logged in? (PrivateRoute) → Does the user have
+  the correct role? (RoleRoute).
+
+
+  Step 1: Standardize the Role Type
+  Ensure your src/types/roles.ts is the single source of truth for all role-based comparisons.       
+
+  Step 2: Update the PrivateRoute Component
+  This component checks if a token exists in the store. If not, it redirects to the login page.      
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────╮    
+│ ✓  WriteFile Writing to src\routes\PrivateRoute.tsx                                           │    
+│                                                                                               │    
+│  1 - import { Navigate } from "react-router-dom";                                             │    
+│  2 - import { useSelector } from "react-redux";                                               │    
+│  3 - import type { RootState } from "../store";                                               │    
+│  4 -                                                                                          │    
+│  5 - const PrivateRoute = ({ children }: any) => {                                            │    
+│  6 -   const token = useSelector((state: RootState) => state.auth.token);                     │    
+│  7 -                                                                                          │    
+│  8 -   if (!token) {                                                                          │    
+│  9 -     return <Navigate to="/" />;                                                          │    
+│ 10 -   }                                                                                      │    
+│ 11 -                                                                                          │    
+│ 12 -   return children;                                                                       │    
+│ 13 - };                                                                                       │    
+│ 14 -                                                                                          │    
+│  1 + import { Navigate, Outlet } from "react-router-dom";                                     │    
+│  2 + import { useSelector } from "react-redux";                                               │    
+│  3 + import type { RootState } from "../store";                                               │    
+│  4 +                                                                                          │    
+│  5 + const PrivateRoute = () => {                                                             │    
+│  6 +   const { token } = useSelector((state: RootState) => state.auth);                       │    
+│  7 +                                                                                          │    
+│  8 +   if (!token) {                                                                          │    
+│  9 +     // Redirect to home if not logged in                                                 │    
+│ 10 +     return <Navigate to="/" replace />;                                                  │    
+│ 11 +   }                                                                                      │    
+│ 12 +                                                                                          │    
+│ 13 +   // Outlet renders the child routes                                                     │    
+│ 14 +   return <Outlet />;                                                                     │    
+│ 15 + };                                                                                       │    
+│ 16 +                                                                                          │    
+│ 17   export default PrivateRoute;                                                             │    
+╰───────────────────────────────────────────────────────────────────────────────────────────────╯    
+✦ I will now update the RoleRoute component to check for the user's role and handle unauthorized     
+  access.
+
+
+  Step 3: Update the RoleRoute Component
+  This component checks if the logged-in user's role matches the required role. If it doesn't match, 
+  the user is redirected to the /unauthorized page.
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────╮    
+│ ✓  WriteFile Writing to src\routes\RoleRoute.tsx                                              │    
+│                                                                                               │    
+│  1 import { Navigate, Outlet } from "react-router-dom";                                       │    
+│  2 import { useSelector } from "react-redux";                                                 │    
+│  3 import type { RootState } from "../store";                                                 │    
+│  4                                                                                            │    
+│  5 interface RoleRouteProps {                                                                 │    
+│  6   allowedRoles: string[];                                                                  │    
+│  7 }                                                                                          │    
+│  8                                                                                            │    
+│  9 const RoleRoute = ({ allowedRoles }: RoleRouteProps) => {                                  │    
+│ 10   const { user } = useSelector((state: RootState) => state.auth);                          │    
+│ 11                                                                                            │    
+│ 12   if (!user || !allowedRoles.includes(user.role)) {                                        │    
+│ 13     // Redirect to unauthorized if the role doesn't match                                  │    
+│ 14     return <Navigate to="/unauthorized" replace />;                                        │    
+│ 15   }                                                                                        │    
+│ 16                                                                                            │    
+│ 17   // Outlet renders the child routes if the role is allowed                                │    
+│ 18   return <Outlet />;                                                                       │    
+│ 19 };                                                                                         │    
+│ 20                                                                                            │    
+│ 21 export default RoleRoute;                                                                  │    
+╰───────────────────────────────────────────────────────────────────────────────────────────────╯    
+✦ I will now update the AppRoutes component to protect specific routes using the PrivateRoute and    
+  RoleRoute components, ensuring that users can only access the sections they are authorized for.    
+
+
+  Step 4: Update the AppRoutes Component
+  We will wrap the routes in <Route element={<PrivateRoute />} /> and then further nest them within  
+  specific <RoleRoute allowedRoles={['ROLE']} /> components.
+
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────╮    
+│ ✓  WriteFile Writing to src\routes\AppRoutes.tsx                                              │    
+│                                                                                               │    
+│  1 - import { Routes, Route, Navigate } from "react-router-dom";                              │    
+│  2 -                                                                                          │    
+│  3 - import Home from "../pages/Home";                                                        │    
+│  4 - import RolePage from "../pages/RolePage";                                                │    
+│  5 - import Login from "../pages/auth/Login";                                                 │    
+│  6 - import Register from "../pages/auth/Register";                                           │    
+│  7 - import ForgotPassword from "../pages/auth/ForgotPassword";                               │    
+│  8 -                                                                                          │    
+│  9 - import CandidateDashboard from "../pages/candidate/Dashboard";                           │    
+│ 10 - import CandidateProfile from "../pages/candidate/Profile";                               │    
+│ 11 - import CandidateJobs from "../pages/candidate/Jobs";                                     │    
+│ 12 - import CandidateJobDetails from "../pages/candidate/JobDetails";                         │    
+│ 13 - import CandidateApplications from "../pages/candidate/Applications";                     │    
+│ 14 - import CandidateApplicationDetails from "../pages/candidate/ApplicationDetails";         │    
+│ 15 - import CandidateVisa from "../pages/candidate/Visa";                                     │    
+│ 16 -                                                                                          │    
+│ 17 - import CompanyDashboard from "../pages/company/Dashboard";                               │    
+│ 18 - import CompanyProfile from "../pages/company/CompanyProfile";                            │    
+│ 19 - import CompanyJobs from "../pages/company/Jobs";                                         │    
+│ 20 - import CompanyReports from "../pages/company/Reports";                                   │    
+│ 21 -                                                                                          │    
+│ 22 - import AdminDashboard from "../pages/admin/Dashboard";                                   │    
+│ 23 - import AdminUsers from "../pages/admin/Users";                                           │    
+│ 24 - import AdminStatistics from "../pages/admin/Statistics";                                 │    
+│ 25 -                                                                                          │    
+│ 26 - import Notifications from "../pages/Notifications";                                      │    
+│ 27 - import NotFound from "../pages/errors/NotFound";                                         │    
+│ 28 - import Unauthorized from "../pages/errors/Unauthorized";                                 │    
+│ 29 - import Settings from "../pages/candidate/Settings";                                      │    
+│ 30 - const AppRoutes = () => {                                                                │    
+│ 31 -   return (                                                                               │    
+│ 32 -     <Routes>                                                                             │    
+│ 33 -       <Route path="/" element={<Home />} />                                              │    
+│ 34 -       <Route path="/role/:role" element={<RolePage />} />                                │    
+│ 35 -       <Route path="/login/:role" element={<Login />} />                                  │    
+│ 36 -       <Route path="/register/:role" element={<Register />} />                            │    
+│ 37 -       <Route path="/forgot-password/:role" element={<ForgotPassword />} />               │    
+│ 38 -       <Route path="/candidate" element={<Navigate to="/candidate/dashboard" />} />       │    
+│ 39 -       <Route path="/candidate/dashboard" element={<CandidateDashboard />} />             │    
+│ 40 -       <Route path="/candidate/profile" element={<CandidateProfile />} />                 │    
+│ 41 -       <Route path="/candidate/jobs" element={<CandidateJobs />} />                       │    
+│ 42 -       <Route path="/candidate/jobs/:id" element={<CandidateJobDetails />} />             │    
+│ 43 -       <Route path="/candidate/applications" element={<CandidateApplications />} />       │    
+│ 44 -       <Route path="/candidate/applications/:id" element={<CandidateApplicationDetails    │    
+│    />} />                                                                                     │    
+│ 45 -       <Route path="/candidate/visa" element={<CandidateVisa />} />                       │    
+│ 46 -       <Route path="/company" element={<Navigate to="/company/dashboard" />} />           │    
+│ 47 -       <Route path="/company/dashboard" element={<CompanyDashboard />} />                 │    
+│ 48 -       <Route path="/company/profile" element={<CompanyProfile />} />                     │    
+│ 49 -       <Route path="/company/jobs" element={<CompanyJobs />} />                           │    
+│ 50 -       <Route path="/company/reports" element={<CompanyReports />} />                     │    
+│ 51 -       <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />               │    
+│ 52 -       <Route path="/admin/dashboard" element={<AdminDashboard />} />                     │    
+│ 53 -       <Route path="/admin/users" element={<AdminUsers />} />                             │    
+│ 54 -       <Route path="/admin/statistics" element={<AdminStatistics />} />                   │    
+│ 55 -       <Route path="/notifications" element={<Notifications />} />                        │    
+│ 56 -       <Route path="/unauthorized" element={<Unauthorized />} />                          │    
+│ 57 -       <Route path="/candidate/settings" element={<Settings />} />                        │    
+│ 58 -       {/*<Route path="*" element={<NotFound />} />*/}                                    │    
+│ 59 -     </Routes>                                                                            │    
+│ 60 -   );                                                                                     │    
+│ 61 - };                                                                                       │    
+│ 62 -                                                                                          │    
+│  1 + import { Routes, Route, Navigate } from "react-router-dom";                              │    
+│  2 + import PrivateRoute from "./PrivateRoute";                                               │    
+│  3 + import RoleRoute from "./RoleRoute";                                                     │    
+│  4 +                                                                                          │    
+│  5 + import Home from "../pages/Home";                                                        │    
+│  6 + import RolePage from "../pages/RolePage";                                                │    
+│  7 + import Login from "../pages/auth/Login";                                                 │    
+│  8 + import Register from "../pages/auth/Register";                                           │    
+│  9 + import ForgotPassword from "../pages/auth/ForgotPassword";                               │    
+│ 10 +                                                                                          │    
+│ 11 + import CandidateDashboard from "../pages/candidate/Dashboard";                           │    
+│ 12 + import CandidateProfile from "../pages/candidate/Profile";                               │    
+│ 13 + import CandidateJobs from "../pages/candidate/Jobs";                                     │    
+│ 14 + import CandidateJobDetails from "../pages/candidate/JobDetails";                         │    
+│ 15 + import CandidateApplications from "../pages/candidate/Applications";                     │    
+│ 16 + import CandidateApplicationDetails from "../pages/candidate/ApplicationDetails";         │    
+│ 17 + import CandidateVisa from "../pages/candidate/Visa";                                     │    
+│ 18 + import Settings from "../pages/candidate/Settings";                                      │    
+│ 19 +                                                                                          │    
+│ 20 + import CompanyDashboard from "../pages/company/Dashboard";                               │    
+│ 21 + import CompanyProfile from "../pages/company/CompanyProfile";                            │    
+│ 22 + import CompanyJobs from "../pages/company/Jobs";                                         │    
+│ 23 + import CompanyReports from "../pages/company/Reports";                                   │    
+│ 24 +                                                                                          │    
+│ 25 + import AdminDashboard from "../pages/admin/Dashboard";                                   │    
+│ 26 + import AdminUsers from "../pages/admin/Users";                                           │    
+│ 27 + import AdminStatistics from "../pages/admin/Statistics";                                 │    
+│ 28 +                                                                                          │    
+│ 29 + import Notifications from "../pages/Notifications";                                      │    
+│ 30 + import NotFound from "../pages/errors/NotFound";                                         │    
+│ 31 + import Unauthorized from "../pages/errors/Unauthorized";                                 │    
+│ 32 +                                                                                          │    
+│ 33 + const AppRoutes = () => {                                                                │    
+│ 34 +   return (                                                                               │    
+│ 35 +     <Routes>                                                                             │    
+│ 36 +       {/* Public Routes */}                                                              │    
+│ 37 +       <Route path="/" element={<Home />} />                                              │    
+│ 38 +       <Route path="/role/:role" element={<RolePage />} />                                │    
+│ 39 +       <Route path="/login/:role" element={<Login />} />                                  │    
+│ 40 +       <Route path="/register/:role" element={<Register />} />                            │    
+│ 41 +       <Route path="/forgot-password/:role" element={<ForgotPassword />} />               │    
+│ 42 +       <Route path="/unauthorized" element={<Unauthorized />} />                          │    
+│ 43 +                                                                                          │    
+│ 44 +       {/* Protected Routes (Authenticated only) */}                                      │    
+╰───────────────────────────────────────────────────────────────────────────────────────────────╯    
+✦ I've completed the cleanup and implemented the role-based protection. Here's what's changed and    
+  why:
+
+
+  Summary of Changes
+   1. main.tsx & App.tsx: Cleaned up the "double routing" and nested issues. App.tsx is now the entry
+      point that simply renders AppRoutes.tsx.
+   2. PrivateRoute.tsx: Updated to use Outlet. This allows it to wrap multiple routes at once in     
+      AppRoutes.tsx.
+   3. RoleRoute.tsx: Implemented a reusable component that takes an allowedRoles array. It redirects 
+      users to /unauthorized if they don't have permission.
+   4. AppRoutes.tsx: Structured your routes using a "Nested Route" strategy.
+       * All protected routes are wrapped in PrivateRoute.
+       * Each specific dashboard is further locked down with RoleRoute.
+
+
+  How to Maintain This
+   * To add a new Candidate page: Simply add a new <Route> inside the CANDIDAT RoleRoute block. It   
+     will automatically inherit both auth and role protection.
+   * Role Names: I used the roles from your Login.tsx logic (CANDIDAT, ENTREPRISE, ADMIN). If your   
+     backend returns different strings, you only need to update the allowedRoles array in
+     AppRoutes.tsx.
+
+
+  Recommendation: Your next step should be to refactor Login.tsx to use RTK Query instead of axios to
+  make the authentication flow fully consistent with the rest of the project. Would you like me to do
+  that?
+
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+ > /quit
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                   │
+│  Agent powering down. Goodbye!                                                                    │
+│                                                                                                   │
+│  Interaction Summary                                                                              │
+│  Session ID:                 a6536ad2-a07a-42d1-8d98-761e8bd5b02f                                 │
+│  Tool Calls:                 18 ( ✓ 18 x 0 )                                                      │
+│  Success Rate:               100.0%                                                               │
+│  User Agreement:             100.0% (18 reviewed)                                                 │
+│  Code Changes:               +125 -109                                                            │
+│                                                                                                   │
+│  Performance                                                                                      │
+│  Wall Time:                  2h 32m 31s                                                           │
+│  Agent Active:               26m                                                                  │
+│    » API Time:               1m 29s (5.7%)                                                        │
+│    » Tool Time:              24m 31s (94.3%)                                                      │
+│                                                                                                   │
+│  Model Usage                                                                                      │
+│  Model                       Reqs   Input Tokens   Cache Reads  Output Tokens                     │
+│  ────────────────────────────────────────────────────────────────────────────                     │
+│  gemini-2.5-flash-lite          4            911         6 992            181                     │
+│  gemini-3-flash-preview        12         43 732        86 044          4 040                     │
+│                                                                                                   │
+│  Savings Highlight: 93 036 (67.6%) of input tokens were served from the cache, reducing costs.    │
+│                                                                                                   │
+│  Tip: Resume a previous session using gemini --resume or /resume                                  │
+╰─────────────────────────────────
+
+
+
+
+
+
+
+
+
+
+
+gbbrgz
