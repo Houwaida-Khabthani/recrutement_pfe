@@ -37,16 +37,17 @@ exports.getUnreadCount = async (req, res) => {
   }
 };
 
-// Create notification
+// Create notification with title and message
 exports.createNotification = async (req, res) => {
   try {
-    const { message, type, id_user } = req.body;
+    const { title, message, type, id_user } = req.body;
 
     if (!message || !id_user) {
       return res.status(400).json({ success: false, message: "Message and user ID are required" });
     }
 
     await notificationService.createNotification({
+      title: title || message.substring(0, 100),
       message,
       type: type || "info",
       id_user,

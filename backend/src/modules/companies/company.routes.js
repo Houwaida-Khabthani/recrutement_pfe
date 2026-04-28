@@ -9,6 +9,9 @@ router.get("/dashboard", controller.getDashboard);
 router.get("/hr-dashboard", controller.getHrDashboard);
 router.get("/analytics", controller.getAnalytics);
 
+// ✅ PUBLIC - Get company by ID (no auth required)
+router.get("/:id", controller.getCompanyById);
+
 router.use((req, res, next) => {
   console.log("Company route hit:", req.method, req.url);
   next();

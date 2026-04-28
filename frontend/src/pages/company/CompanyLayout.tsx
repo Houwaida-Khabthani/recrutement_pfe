@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, FileText, BarChart, Building, Settings } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, FileText, BarChart, Settings } from 'lucide-react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { logout } from '../../store/slices/authSlice';
@@ -22,7 +22,6 @@ const CompanyLayout = () => {
     { to: '/company/platform-activity', icon: FileText, label: 'Applications' },
     { to: '/company/rapport', icon: BarChart, label: 'Rapport' },
     { to: '/company/analytics', icon: BarChart, label: 'Analytics' },
-    { to: '/company/profile', icon: Building, label: 'Company' },
     { to: '/company/settings', icon: Settings, label: 'Settings' },
   ];
 

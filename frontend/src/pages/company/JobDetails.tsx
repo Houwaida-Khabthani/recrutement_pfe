@@ -18,7 +18,6 @@ const JobDetails: React.FC = () => {
       <p>Salary: {job.salaire}</p>
       <p>Status: {job.statut}</p>
       <p>Published on: {new Date(job.date_pub).toLocaleDateString()}</p>
-      <p>Expiration: {job.date_expiration}</p>
     </div>
   );
 };

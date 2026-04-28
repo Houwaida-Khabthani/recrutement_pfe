@@ -5,12 +5,13 @@ import {
   CheckCircle, Building, Send, X, Loader, Upload, Globe
 } from 'lucide-react';
 import { useGetJobByIdQuery } from '../../store/api/jobApi';
-import { useApplyToJobMutation } from '../../store/api/applicationApi';
+import { useApplyToJobMutation, useGetMyApplicationsQuery } from '../../store/api/applicationApi';
 
 const CandidateJobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: job, isLoading } = useGetJobByIdQuery(id!);
+  const { data: myApplications = [] } = useGetMyApplicationsQuery(undefined);
   const [applyToJob, { isLoading: applying }] = useApplyToJobMutation();
 
   const [showModal, setShowModal] = useState(false);
@@ -18,6 +19,14 @@ const CandidateJobDetails = () => {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [applied, setApplied] = useState(false);
   const [validationError, setValidationError] = useState('');
+
+  // Check if user already applied to this job
+  const currentApplication = Array.isArray(myApplications)
+    ? myApplications.find((app: any) => String(app.id_offre) === String(id))
+    : null;
+
+  const canReapply = currentApplication?.statut === 'REJECTED';
+  const canApply = !currentApplication || canReapply;
 
   // ✅ Validate both fields are filled (BOTH required)
   const validateForm = () => {
@@ -114,7 +123,7 @@ const CandidateJobDetails = () => {
             </div>
           </div>
 
-          {isOpen && !applied && (
+          {isOpen && canApply && !applied && (
             <button
               onClick={() => setShowModal(true)}
               className="flex-shrink-0 flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-2xl shadow-indigo-900 hover:-translate-y-1 hover:bg-indigo-500 transition-all active:scale-95"
@@ -122,9 +131,28 @@ const CandidateJobDetails = () => {
               <Send className="w-4 h-4" /> Apply Now
             </button>
           )}
+          {isOpen && canReapply && !applied && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex-shrink-0 flex items-center gap-2 px-8 py-4 bg-amber-600 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-2xl shadow-amber-900 hover:-translate-y-1 hover:bg-amber-500 transition-all active:scale-95"
+            >
+              <Send className="w-4 h-4" /> Apply Again
+            </button>
+          )}
           {applied && (
             <div className="flex items-center gap-2 px-8 py-4 bg-emerald-500/20 text-emerald-400 font-black rounded-2xl text-sm uppercase tracking-widest border border-emerald-500/30">
               <CheckCircle className="w-4 h-4" /> Applied!
+            </div>
+          )}
+          {currentApplication && !applied && currentApplication.statut !== 'REJECTED' && (
+            <div className="flex-shrink-0 flex items-center gap-2 px-8 py-4 bg-slate-200/30 text-slate-600 font-black rounded-2xl text-sm uppercase tracking-widest border border-slate-300/30">
+              <CheckCircle className="w-4 h-4" /> {currentApplication.statut}
+            </div>
+          )}
+          {currentApplication?.statut === 'ACCEPTED' && !applied && (
+            <div className="flex-shrink-0 flex flex-col items-center gap-1 px-8 py-4 bg-emerald-500/20 text-emerald-600 font-black rounded-2xl text-sm uppercase tracking-widest border border-emerald-500/30">
+              <CheckCircle className="w-4 h-4" /> Accepted!
+              <p className="text-[10px] font-medium">You can't apply again</p>
             </div>
           )}
         </div>
@@ -149,7 +177,6 @@ const CandidateJobDetails = () => {
                 { icon: Clock, label: 'Experience Required', value: job.experience || 'Not specified' },
                 { icon: Briefcase, label: 'Contract Type', value: job.type_contrat || 'Not specified' },
                 { icon: MapPin, label: 'Location', value: job.localisation || 'Remote' },
-                { icon: Calendar, label: 'Expiry Date', value: job.date_expiration ? new Date(job.date_expiration).toLocaleDateString() : 'Open' },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -168,11 +195,14 @@ const CandidateJobDetails = () => {
         {/* Right: Sidebar */}
         <div className="space-y-5">
           {/* Company card */}
-          <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl">
+          <div 
+            onClick={() => navigate(`/candidate/company/${job.id_entreprise}`)}
+            className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl cursor-pointer hover:shadow-2xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-1 group"
+          >
             <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[4px] mb-5">About the Company</h3>
             <div className="flex items-center gap-4 mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center">
-                <Building className="w-7 h-7 text-white/60" />
+              <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all">
+                <Building className="w-7 h-7 text-white/60 group-hover:text-white transition-colors" />
               </div>
               <div>
                 <p className="font-black text-white text-base">Company #{job.id_entreprise}</p>
@@ -180,9 +210,17 @@ const CandidateJobDetails = () => {
               </div>
             </div>
             <div className="space-y-3 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-3 text-white/50 text-xs font-bold">
-                <Globe className="w-3.5 h-3.5 text-white/20" />Visit company profile
-              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/candidate/company/${job.id_entreprise}`);
+                }}
+                className="w-full flex items-center gap-3 text-white/80 text-xs font-bold hover:text-white transition-colors group/btn"
+              >
+                <Globe className="w-3.5 h-3.5 text-white/20 group-hover/btn:text-indigo-400 transition-colors" />
+                <span className="flex-1 group-hover/btn:text-indigo-400 transition-colors">Visit company profile</span>
+                <ArrowLeft className="w-3.5 h-3.5 text-white/20 group-hover/btn:text-indigo-400 rotate-180 transition-colors" />
+              </button>
             </div>
           </div>
 
@@ -195,27 +233,53 @@ const CandidateJobDetails = () => {
             </div>
           )}
 
-          {/* Apply card */}
-          {isOpen && !applied && (
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-              <p className="text-slate-400 text-xs font-bold mb-4">Ready to join the team?</p>
-              <button
-                onClick={() => setShowModal(true)}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-0.5 transition-all shadow-lg shadow-indigo-100 active:scale-95"
-              >
-                <Send className="w-4 h-4" /> Apply for this Job
-              </button>
-              <p className="text-center text-slate-300 text-[10px] font-bold mt-3">
-                Expires {job.date_expiration ? new Date(job.date_expiration).toLocaleDateString() : 'N/A'}
-              </p>
-            </div>
-          )}
-
           {applied && (
             <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-6 text-center">
               <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
               <p className="text-emerald-700 font-black text-sm">Application Submitted!</p>
               <p className="text-emerald-500 text-xs font-bold mt-1">We'll notify you of any updates.</p>
+            </div>
+          )}
+
+          {currentApplication && !applied && (
+            <div className={`${
+              currentApplication.statut === 'ACCEPTED' 
+                ? 'bg-emerald-50 border border-emerald-100' 
+                : currentApplication.statut === 'REJECTED'
+                ? 'bg-red-50 border border-red-100'
+                : 'bg-blue-50 border border-blue-100'
+            } rounded-3xl p-6 text-center`}>
+              <CheckCircle className={`w-10 h-10 mx-auto mb-3 ${
+                currentApplication.statut === 'ACCEPTED' 
+                  ? 'text-emerald-500' 
+                  : currentApplication.statut === 'REJECTED'
+                  ? 'text-red-500'
+                  : 'text-blue-500'
+              }`} />
+              <p className={`${
+                currentApplication.statut === 'ACCEPTED' 
+                  ? 'text-emerald-700' 
+                  : currentApplication.statut === 'REJECTED'
+                  ? 'text-red-700'
+                  : 'text-blue-700'
+              } font-black text-sm`}>
+                {currentApplication.statut === 'ACCEPTED' ? 'Application Accepted! 🎉' : 
+                 currentApplication.statut === 'REJECTED' ? 'Application Rejected' :
+                 currentApplication.statut === 'INTERVIEW' ? 'In Interview Process' :
+                 currentApplication.statut === 'EN_ATTENTE' ? 'Application Pending' :
+                 currentApplication.statut}
+              </p>
+              <p className={`${
+                currentApplication.statut === 'ACCEPTED' 
+                  ? 'text-emerald-500' 
+                  : currentApplication.statut === 'REJECTED'
+                  ? 'text-red-500'
+                  : 'text-blue-500'
+              } text-xs font-bold mt-1`}>
+                {currentApplication.statut === 'ACCEPTED' ? 'Congratulations!' : 
+                 currentApplication.statut === 'REJECTED' ? 'You can apply again' :
+                 'Status: ' + currentApplication.statut}
+              </p>
             </div>
           )}
         </div>

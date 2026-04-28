@@ -208,15 +208,117 @@ const Admin = {
 
   // Stats
   getStats: async () => {
-    const [[users]] = await pool.query("SELECT COUNT(*) as total FROM user");
-    const [[offers]] = await pool.query("SELECT COUNT(*) as total FROM offre");
-    const [[apps]] = await pool.query("SELECT COUNT(*) as total FROM candidature");
-    const [[companies]] = await pool.query("SELECT COUNT(*) as total FROM company");
+    // 1. Basic counts
+    const [[{ total: totalUsers }]] = await pool.query("SELECT COUNT(*) as total FROM user");
+    const [[{ total: totalOffers }]] = await pool.query("SELECT COUNT(*) as total FROM offre");
+    const [[{ total: totalApplications }]] = await pool.query("SELECT COUNT(*) as total FROM candidature");
+    const [[{ total: totalCompanies }]] = await pool.query("SELECT COUNT(*) as total FROM company");
+
+    // 2. User distribution by role
+    const [usersByRole] = await pool.query("SELECT role, COUNT(*) as count FROM user GROUP BY role");
+    const distribution = {
+      candidates: usersByRole.find(r => r.role === 'CANDIDATE')?.count || 0,
+      recruiters: usersByRole.find(r => r.role === 'RECRUITER')?.count || 0,
+      admins: usersByRole.find(r => r.role === 'ADMIN')?.count || 0
+    };
+
+    // 3. Users per month (last 12 months)
+    const [usersPerMonth] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(date_inscription, '%Y-%m') as month,
+        COUNT(*) as count
+      FROM user
+      WHERE date_inscription >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      GROUP BY DATE_FORMAT(date_inscription, '%Y-%m')
+      ORDER BY month ASC
+    `);
+
+    // 4. Applications per status
+    const [applicationsByStatus] = await pool.query(`
+      SELECT statut as status, COUNT(*) as count
+      FROM candidature
+      GROUP BY statut
+    `);
+
+    // 5. Top jobs by applications
+    const [topJobs] = await pool.query(`
+      SELECT 
+        o.id_offre,
+        o.titre as title,
+        COUNT(c.id_candidature) as applicationCount
+      FROM offre o
+      LEFT JOIN candidature c ON o.id_offre = c.id_offre
+      GROUP BY o.id_offre, o.titre
+      ORDER BY applicationCount DESC
+      LIMIT 10
+    `);
+
+    // 6. Job status distribution
+    const [jobsByStatus] = await pool.query(`
+      SELECT statut as status, COUNT(*) as count
+      FROM offre
+      GROUP BY statut
+    `);
+
+    // 7. Company status distribution
+    const [companiesByStatus] = await pool.query(`
+      SELECT statut as status, COUNT(*) as count
+      FROM company
+      GROUP BY statut
+    `);
+
+    // 8. Recent activity (last 7 days)
+    const [[{ newUsersThisWeek }]] = await pool.query(`
+      SELECT COUNT(*) as newUsersThisWeek
+      FROM user
+      WHERE date_inscription >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    `);
+
+    const [[{ newApplicationsThisWeek }]] = await pool.query(`
+      SELECT COUNT(*) as newApplicationsThisWeek
+      FROM candidature
+      WHERE date_candidature >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    `);
+
     return {
-      totalUsers: users.total,
-      totalOffers: offers.total,
-      totalApplications: apps.total,
-      totalCompanies: companies.total
+      // Summary stats
+      totalUsers,
+      totalCompanies,
+      totalOffers,
+      totalApplications,
+      
+      // Distribution
+      distribution,
+      
+      // Charts data
+      usersPerMonth: usersPerMonth.map(row => ({
+        month: row.month,
+        count: row.count
+      })),
+      
+      applicationsByStatus: applicationsByStatus.map(row => ({
+        status: row.status || 'pending',
+        count: row.count
+      })),
+      
+      topJobs: topJobs.map(row => ({
+        title: row.title,
+        applicationCount: row.applicationCount
+      })),
+      
+      jobsByStatus: jobsByStatus.map(row => ({
+        status: row.status || 'draft',
+        count: row.count
+      })),
+      
+      companiesByStatus: companiesByStatus.map(row => ({
+        status: row.status || 'pending',
+        count: row.count
+      })),
+      
+      // Recent activity
+      newUsersThisWeek,
+      newApplicationsThisWeek
     };
   },
 

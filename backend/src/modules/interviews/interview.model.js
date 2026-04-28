@@ -11,8 +11,6 @@ const Interview = {
          i.meeting_link AS meetingLink,
          i.status,
          i.notes,
-         i.confirmed_at,
-         i.confirmed_by,
          c.id_candidature AS application_id,
          c.expected_interviews,
          o.titre AS jobTitle,
@@ -38,8 +36,6 @@ const Interview = {
          i.meeting_link AS meetingLink,
          i.status,
          i.notes,
-         i.confirmed_at,
-         i.confirmed_by,
          c.id_candidature AS application_id,
          c.expected_interviews,
          o.titre AS jobTitle,
@@ -138,8 +134,8 @@ const Interview = {
 
   updateConfirmation: async (interviewId, userId) => {
     const [result] = await pool.query(
-      `UPDATE interviews SET status = 'confirmed', confirmed_at = NOW(), confirmed_by = ?, updated_at = NOW() WHERE id_interview = ?`,
-      [userId, interviewId]
+      `UPDATE interviews SET status = 'confirmed', updated_at = NOW() WHERE id_interview = ?`,
+      [interviewId]
     );
     if (result.affectedRows === 0) {
       throw new Error("Interview not found");

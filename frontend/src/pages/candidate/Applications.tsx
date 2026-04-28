@@ -2,30 +2,30 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Calendar, Clock, CheckCircle, XCircle,
-  MapPin, Briefcase, Filter, ArrowRight
+  MapPin, Briefcase, Filter, ArrowRight, TrendingUp,
+  AlertCircle, MessageSquare, Star, Eye, Building
 } from 'lucide-react';
 import { useGetMyApplicationsQuery } from '../../store/api/applicationApi';
 
 const STAGES = [
-  { key: 'PENDING',      label: 'Applied',       color: 'bg-slate-400',   textColor: 'text-slate-600',   bgLight: 'bg-slate-50',   borderColor: 'border-slate-100' },
-  { key: 'UNDER_REVIEW', label: 'Under Review',  color: 'bg-amber-500',   textColor: 'text-amber-600',   bgLight: 'bg-amber-50',   borderColor: 'border-amber-100' },
-  { key: 'INTERVIEW',    label: 'Interview',     color: 'bg-blue-500',    textColor: 'text-blue-600',    bgLight: 'bg-blue-50',    borderColor: 'border-blue-100' },
-  { key: 'ACCEPTED',     label: 'Offer Sent',    color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50', borderColor: 'border-emerald-100' },
-  { key: 'REJECTED',     label: 'Rejected',      color: 'bg-red-500',     textColor: 'text-red-600',     bgLight: 'bg-red-50',     borderColor: 'border-red-100' },
+  { key: 'EN_ATTENTE',  label: 'Applied',       color: 'bg-slate-400',   textColor: 'text-slate-600',   bgLight: 'bg-slate-50',   borderColor: 'border-slate-100', icon: Clock },
+  { key: 'EN_COURS',    label: 'Under Review',  color: 'bg-amber-500',   textColor: 'text-amber-600',   bgLight: 'bg-amber-50',   borderColor: 'border-amber-100', icon: Eye },
+  { key: 'ENTRETIEN',   label: 'Interview',     color: 'bg-blue-500',    textColor: 'text-blue-600',    bgLight: 'bg-blue-50',    borderColor: 'border-blue-100', icon: MessageSquare },
+  { key: 'ACCEPTE',     label: 'Offer Sent',    color: 'bg-emerald-500', textColor: 'text-emerald-600', bgLight: 'bg-emerald-50', borderColor: 'border-emerald-100', icon: CheckCircle },
+  { key: 'REFUSE',      label: 'Rejected',      color: 'bg-red-500',     textColor: 'text-red-600',     bgLight: 'bg-red-50',     borderColor: 'border-red-100', icon: XCircle },
 ];
 
 const getStage = (status: string) => STAGES.find(s => s.key === status?.toUpperCase()) || STAGES[0];
 
 const getStatusIcon = (status: string) => {
-  switch (status?.toUpperCase()) {
-    case 'ACCEPTED':     return <CheckCircle className="w-3.5 h-3.5" />;
-    case 'REJECTED':     return <XCircle className="w-3.5 h-3.5" />;
-    case 'INTERVIEW':    return <Calendar className="w-3.5 h-3.5" />;
-    case 'UNDER_REVIEW': return <Clock className="w-3.5 h-3.5" />;
-    case 'PENDING':
-    case 'EN_ATTENTE':   return <Clock className="w-3.5 h-3.5" />;
-    default:             return <Clock className="w-3.5 h-3.5" />;
-  }
+  const stage = getStage(status);
+  const IconComponent = stage.icon;
+  return <IconComponent className="w-3.5 h-3.5" />;
+};
+
+const getProgressPercentage = (status: string) => {
+  const statusIndex = STAGES.findIndex(s => s.key === status?.toUpperCase());
+  return Math.max(0, Math.min(100, ((statusIndex + 1) / STAGES.length) * 100));
 };
 
 const CandidateApplications = () => {
@@ -37,19 +37,15 @@ const CandidateApplications = () => {
   const apps = Array.isArray(applications) ? applications : [];
 
   const counts = STAGES.reduce((acc, s) => {
-    acc[s.key] = apps.filter((a: any) => {
-      const status = a.statut?.toUpperCase();
-      if (s.key === 'PENDING') return status === 'PENDING' || status === 'EN_ATTENTE';
-      return status === s.key;
-    }).length;
+    acc[s.key] = apps.filter((a: any) => a.statut?.toUpperCase() === s.key).length;
     return acc;
   }, {} as Record<string, number>);
 
-  const filtered = activeFilter === 'ALL' ? apps : apps.filter((a: any) => {
-    const status = a.statut?.toUpperCase();
-    if (activeFilter === 'PENDING') return status === 'PENDING' || status === 'EN_ATTENTE';
-    return status === activeFilter;
-  });
+  const filtered = activeFilter === 'ALL' ? apps : apps.filter((a: any) => a.statut?.toUpperCase() === activeFilter);
+
+  const totalApplications = apps.length;
+  const activeApplications = apps.filter((a: any) => !['ACCEPTE', 'REFUSE'].includes(a.statut?.toUpperCase())).length;
+  const successRate = totalApplications > 0 ? Math.round((counts['ACCEPTE'] / totalApplications) * 100) : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -63,6 +59,58 @@ const CandidateApplications = () => {
         </p>
       </div>
 
+      {/* ── Statistics Overview ── */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div className="flex items-center gap-1 text-emerald-600">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs font-bold">+12%</span>
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 mb-1">{totalApplications}</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Total Applications</p>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+          </div>
+          <p className="text-2xl font-black text-slate-900 mb-1">{activeApplications}</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Active Applications</p>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div className="flex items-center gap-1 text-emerald-600">
+              <Star className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 mb-1">{counts['ACCEPTE'] || 0}</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Offers Received</p>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="text-xs font-bold text-blue-600">{successRate}%</div>
+          </div>
+          <p className="text-2xl font-black text-slate-900 mb-1">{successRate}%</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Success Rate</p>
+        </div>
+      </div>
+
       {/* ── Pipeline summary ── */}
       <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm">
         <div className="flex items-center justify-between mb-8">
@@ -72,14 +120,17 @@ const CandidateApplications = () => {
             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {STAGES.slice(0, 4).map((stage) => (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {STAGES.map((stage) => (
             <div
               key={stage.key}
               onClick={() => setActiveFilter(activeFilter === stage.key ? 'ALL' : stage.key)}
               className={`p-5 rounded-2xl border cursor-pointer transition-all hover:-translate-y-0.5 ${activeFilter === stage.key ? `${stage.bgLight} ${stage.borderColor}` : 'bg-slate-50 border-slate-100 hover:border-slate-200'}`}
             >
-              <div className={`w-3 h-3 rounded-full ${stage.color} mb-3`} />
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-3 h-3 rounded-full ${stage.color}`} />
+                <stage.icon className={`w-4 h-4 ${activeFilter === stage.key ? stage.textColor : 'text-slate-400'}`} />
+              </div>
               <p className="text-2xl font-black text-slate-900 mb-1">{counts[stage.key] || 0}</p>
               <p className={`text-[10px] font-black uppercase tracking-widest ${activeFilter === stage.key ? stage.textColor : 'text-slate-400'}`}>
                 {stage.label}
@@ -183,14 +234,17 @@ const CandidateApplications = () => {
                         </span>
                       </td>
                       <td className="py-6 px-4 text-center">
-                        {/* Mini pipeline tracker */}
-                        <div className="flex items-center justify-center gap-1">
-                          {STAGES.slice(0, 4).map((s, si) => (
+                        {/* Progress bar with percentage */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div
-                              key={s.key}
-                              className={`w-2 h-2 rounded-full transition-all ${si <= stageIndex && stageIndex !== 4 ? s.color : (app.statut?.toUpperCase() === 'REJECTED' && si === stageIndex ? 'bg-red-500' : 'bg-slate-200')}`}
+                              className={`h-full transition-all duration-500 ${stage.color}`}
+                              style={{ width: `${((stageIndex + 1) / STAGES.length) * 100}%` }}
                             />
-                          ))}
+                          </div>
+                          <span className="text-xs font-bold text-slate-500">
+                            {Math.round(((stageIndex + 1) / STAGES.length) * 100)}%
+                          </span>
                         </div>
                       </td>
                       <td className="py-6 px-4 text-center">

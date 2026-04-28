@@ -11,6 +11,8 @@ import {
   Loader
 } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
+import { validateProfileForm } from '../../utils/formValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 type FormState = {
   nom: string;
@@ -53,6 +55,7 @@ const CandidateProfile = () => {
   const cvInputRef = useRef<HTMLInputElement>(null);
 
   const uploadUrl = import.meta.env.VITE_UPLOAD_URL || 'http://localhost:5000/uploads';
+  const { errors, setErrors, resetErrors } = useFormValidation();
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-[600px]">
@@ -100,6 +103,14 @@ const CandidateProfile = () => {
   };
 
   const handleSave = async () => {
+    resetErrors();
+
+    const validationErrors = validateProfileForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => { if (v) formData.append(k, v); });
     if (cvFile) formData.append('cv', cvFile);
@@ -272,6 +283,7 @@ const CandidateProfile = () => {
                           onChange={handleChange}
                           className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-indigo-50 focus:border-indigo-300 transition-all outline-none"
                         />
+                        {errors[name] && <span className="error-text">{errors[name]}</span>}
                       </div>
                     </div>
                   ))}
@@ -285,6 +297,7 @@ const CandidateProfile = () => {
                       className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-indigo-50 focus:border-indigo-300 transition-all outline-none resize-none"
                       placeholder="Tell employers about yourself..."
                     />
+                    {errors.bio && <span className="error-text">{errors.bio}</span>}
                   </div>
                 </div>
               ) : (
@@ -431,6 +444,7 @@ const CandidateProfile = () => {
                           placeholder={placeholder}
                           className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-indigo-50 focus:border-indigo-300 transition-all outline-none"
                         />
+                        {errors[name] && <span className="error-text">{errors[name]}</span>}
                       </div>
                     </div>
                   ))}

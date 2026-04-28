@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Sidebar from "../../components/common/Sidebar";
 import Navbar from "../../components/common/Navbar";
 import { useGetCompanyJobsQuery, useCreateJobMutation, useUpdateJobMutation, useDeleteJobMutation } from "../../store/api/jobApi";
+import { validateJobForm } from "../../utils/formValidation";
+import { useFormValidation } from "../../hooks/useFormValidation";
 
 function CompanyJobsManagement() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +30,7 @@ function CompanyJobsManagement() {
   const [deleteJob, { isLoading: isDeleting }] = useDeleteJobMutation();
   const [createJob, { isLoading: isCreating }] = useCreateJobMutation();
   const [updateJob, { isLoading: isUpdating }] = useUpdateJobMutation();
+  const { errors, setErrors, resetErrors } = useFormValidation();
 
   const jobsData = jobs || [];
   
@@ -51,6 +54,23 @@ function CompanyJobsManagement() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    resetErrors();
+
+    const validationData = {
+      titre: formData.titre,
+      secteur: formData.secteur,
+      localisation: formData.localisation,
+      type_contrat: formData.type_contrat,
+      description: formData.description,
+      salaire: formData.salaire_min || formData.salaire_max,
+      date_expiration: formData.date_expiration || ''
+    };
+    const validationErrors = validateJobForm(validationData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     try {
       await createJob(formData).unwrap();
       setShowCreateForm(false);
@@ -65,6 +85,23 @@ function CompanyJobsManagement() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingJob) return;
+    resetErrors();
+
+    const validationData = {
+      titre: formData.titre,
+      secteur: formData.secteur,
+      localisation: formData.localisation,
+      type_contrat: formData.type_contrat,
+      description: formData.description,
+      salaire: formData.salaire_min || formData.salaire_max,
+      date_expiration: formData.date_expiration || ''
+    };
+    const validationErrors = validateJobForm(validationData);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     try {
       await updateJob({ id: editingJob.id_offre, ...formData }).unwrap();
       setEditingJob(null);
@@ -338,6 +375,7 @@ function CompanyJobsManagement() {
                       style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
                       placeholder="e.g., Senior Software Engineer"
                     />
+                    {errors.titre && <span className="error-text">{errors.titre}</span>}
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Sector *</label>
@@ -349,6 +387,7 @@ function CompanyJobsManagement() {
                       style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
                       placeholder="e.g., Engineering"
                     />
+                    {errors.secteur && <span className="error-text">{errors.secteur}</span>}
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Location *</label>
@@ -360,6 +399,7 @@ function CompanyJobsManagement() {
                       style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
                       placeholder="e.g., San Francisco, CA"
                     />
+                    {errors.localisation && <span className="error-text">{errors.localisation}</span>}
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Contract Type</label>
@@ -427,6 +467,7 @@ function CompanyJobsManagement() {
                     style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box", minHeight: "120px", fontFamily: "inherit" }}
                     placeholder="Job description..."
                   />
+                  {errors.description && <span className="error-text">{errors.description}</span>}
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <button

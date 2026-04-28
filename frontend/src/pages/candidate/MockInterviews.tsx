@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Mic, Video, Brain, CheckCircle, ChevronRight, Star, Clock, Play } from 'lucide-react';
+import { Mic, Video, Brain, CheckCircle, ChevronRight, Star, Clock, Play, Calendar, MapPin, Building } from 'lucide-react';
+import { useGetInterviewsQuery } from '../../store/api/interviewApi';
 
 const categories = [
   { id: 'behavioral', label: 'Behavioral', icon: Brain, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', questions: 12 },
   { id: 'technical', label: 'Technical', icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', questions: 18 },
-  { id: 'situation', label: 'Situational', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', questions: 10 },
+  { id: 'situational', label: 'Situational', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', questions: 10 },
   { id: 'hr', label: 'HR Questions', icon: Mic, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', questions: 8 },
 ];
 
@@ -14,24 +15,56 @@ const sampleQuestions: Record<string, string[]> = {
     'Describe a situation where you had to adapt to a sudden change.',
     'Give an example of how you handled a conflict within a team.',
     'Tell me about your biggest professional failure and what you learned.',
+    'Describe a time when you had to work with a difficult colleague.',
+    'Tell me about a project where you exceeded expectations.',
+    'Describe a time you had to meet a tight deadline.',
+    'Tell me about a time you took initiative to improve a process.',
+    'Describe a situation where you had to learn something new quickly.',
+    'Tell me about a time you received constructive criticism.',
+    'Describe a situation where you had to prioritize multiple tasks.',
+    'Tell me about a time you helped a colleague succeed.',
   ],
   technical: [
     'Explain the difference between REST and GraphQL APIs.',
     'What is the virtual DOM and how does React use it?',
     'How would you design a scalable microservices architecture?',
     'Walk me through how you would debug a production issue.',
+    'Explain the concept of asynchronous programming.',
+    'What is the difference between SQL and NoSQL databases?',
+    'How would you optimize a slow database query?',
+    'Describe your approach to version control and git workflows.',
+    'What design patterns are you familiar with?',
+    'Explain the concept of dependency injection.',
+    'How would you implement caching in your application?',
+    'What is the framework you\'re most comfortable with and why?',
+    'Explain how you would secure an API.',
+    'Describe your testing strategy.',
+    'What is your experience with cloud platforms?',
+    'How would you approach refactoring legacy code?',
+    'Explain containerization and Docker.',
+    'What CI/CD tools have you used?',
   ],
-  situation: [
+  situational: [
     'How would you handle a client demanding an unrealistic deadline?',
     'What would you do if you disagreed with your manager\'s decision?',
     'How would you prioritize tasks when everything is urgent?',
     'Describe how you would handle a sudden team member departure mid-project.',
+    'What would you do if you discovered a major bug right before release?',
+    'How would you handle performance issues in production?',
+    'What would you do if a colleague was underperforming?',
+    'How would you approach learning a new technology you\'ve never used?',
+    'What would you do if you made a mistake that affected the team?',
+    'How would you handle working with a remote team?',
   ],
   hr: [
     'Where do you see yourself in 5 years?',
     'Why do you want to work for our company?',
     'What are your salary expectations?',
     'Why are you leaving your current position?',
+    'What are your greatest strengths?',
+    'What are your weaknesses and how do you address them?',
+    'Tell us about a time you faced a challenge at work.',
+    'How do you handle work-life balance?',
   ],
 };
 
@@ -43,13 +76,28 @@ const tips = [
 ];
 
 const CandidateMockInterviews = () => {
+  const { data: interviews = [] } = useGetInterviewsQuery(undefined);
   const [activeCategory, setActiveCategory] = useState('behavioral');
   const [activeQuestion, setActiveQuestion] = useState<number | null>(null);
 
+  console.log('[MockInterviews] Interviews data:', interviews);
+  console.log('[MockInterviews] Interviews length:', Array.isArray(interviews) ? interviews.length : 'not array');
+
   const questions = sampleQuestions[activeCategory] || [];
 
+  const getStatusColor = (status: string) => {
+    switch(status?.toLowerCase()) {
+      case 'scheduled': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'confirmed': return 'bg-green-50 text-green-700 border-green-100';
+      case 'passed': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'failed': return 'bg-red-50 text-red-700 border-red-100';
+      case 'cancelled': return 'bg-gray-50 text-gray-700 border-gray-100';
+      default: return 'bg-slate-50 text-slate-700 border-slate-100';
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-5xl">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-7xl">
 
       {/* ── Header ── */}
       <div>
@@ -59,6 +107,50 @@ const CandidateMockInterviews = () => {
         <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Mock Interviews</h1>
         <p className="text-slate-400 font-medium text-base mt-1">Sharpen your answers and ace your next interview with AI-powered practice.</p>
       </div>
+
+      {/* ── Your Interviews Section ── */}
+      {Array.isArray(interviews) && interviews.length > 0 && (
+        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+          <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-transparent">
+            <h2 className="font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-indigo-600" />
+              Your Scheduled Interviews
+            </h2>
+            <p className="text-slate-400 text-xs font-bold mt-0.5">{interviews.length} interview{interviews.length !== 1 ? 's' : ''} scheduled</p>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {interviews.map((interview: any, idx: number) => (
+              <div key={idx} className="p-6 hover:bg-slate-50/50 transition-all">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Round {interview.step}</p>
+                    <p className="font-bold text-slate-900 text-sm">{interview.jobTitle || 'Interview'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Scheduled</p>
+                      <p className="font-bold text-slate-700 text-sm">{new Date(interview.date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-slate-400" />
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</p>
+                      <p className="font-bold text-slate-700 text-sm">{interview.location?.includes('http') ? 'Online' : interview.location || 'TBD'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border inline-block ${getStatusColor(interview.status)}`}>
+                      {interview.status}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Hero banner ── */}
       <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden">

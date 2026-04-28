@@ -16,6 +16,36 @@ exports.getProfile = async (userId) => {
   }
 };
 
+// ✅ PUBLIC - Get company by ID (for public profile view)
+exports.getCompanyById = async (companyId) => {
+  try {
+    console.error(`[COMPANY SERVICE] Fetching public profile for company ID: ${companyId}`);
+    const [company] = await pool.execute(
+      "SELECT id_company, nom, description, logo, email, telephone, secteur, pays, site_web, type FROM company WHERE id_company = ?",
+      [companyId]
+    );
+
+    if (company.length === 0) {
+      return null;
+    }
+
+    // Get company jobs count
+    const [jobsResult] = await pool.execute(
+      "SELECT COUNT(*) as job_count FROM offre WHERE id_entreprise = ? AND statut IN ('OUVERT', 'Active')",
+      [companyId]
+    );
+
+    const companyData = company[0];
+    companyData.activeJobs = jobsResult[0]?.job_count || 0;
+
+    console.error(`[COMPANY SERVICE] Company found: ${companyData.nom}`);
+    return companyData;
+  } catch (error) {
+    console.error(`[COMPANY SERVICE ERROR] getCompanyById: ${error.message}`);
+    throw error;
+  }
+};
+
 // ✅ UPDATE / UPSERT
 exports.updateProfile = async (userId, data) => {
   try {

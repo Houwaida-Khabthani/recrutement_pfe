@@ -5,6 +5,10 @@ const bcrypt = require("bcrypt");
  * LOGIN
  */
 exports.login = async (email, password) => {
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
+
   const [rows] = await db.query(
     "SELECT * FROM user WHERE email = ?",
     [email]
@@ -16,7 +20,19 @@ exports.login = async (email, password) => {
 
   const user = rows[0];
 
-  const isMatch = await bcrypt.compare(password, user.mot_de_passe);
+  // ✅ Validate password field exists and is not null
+  if (!user.mot_de_passe) {
+    console.error('[AUTH] User password is null or empty for email:', email);
+    throw new Error("Invalid user password data");
+  }
+
+  let isMatch = false;
+  try {
+    isMatch = await bcrypt.compare(password, user.mot_de_passe);
+  } catch (bcryptError) {
+    console.error('[AUTH] Bcrypt comparison error:', bcryptError.message);
+    throw new Error("Password verification failed");
+  }
 
   if (!isMatch) {
     throw new Error("Mot de passe incorrect");

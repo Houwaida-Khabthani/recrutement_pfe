@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from "../../components/common/Sidebar";
-import Navbar from "../../components/common/Navbar";
+import { Download, Upload, Trash2, CheckCircle, Clock, AlertCircle, Eye, FileText } from 'lucide-react';
 import { useGetVisaDocumentsQuery, useUploadVisaDocsMutation, useDeleteVisaDocMutation, useUpdateVisaStatusMutation } from "../../store/api/visaApi";
 
 function CandidateVisaManagement() {
@@ -36,9 +35,9 @@ function CandidateVisaManagement() {
       setShowUploadForm(false);
       setSelectedFile(null);
       refetch();
-      alert("Document téléchargé avec succès");
+      alert("Document uploaded successfully");
     } catch (err: any) {
-      alert(err.data?.message || "Erreur lors du téléchargement");
+      alert(err.data?.message || "Error during upload");
     }
   };
 
@@ -47,254 +46,211 @@ function CandidateVisaManagement() {
       try {
         await deleteDoc(docId).unwrap();
         refetch();
-        alert("Document supprimé avec succès");
+        alert("Document deleted successfully");
       } catch (err: any) {
-        alert(err.data?.message || "Erreur lors de la suppression");
+        alert(err.data?.message || "Error during deletion");
       }
     }
   };
 
-  const handleStatusUpdate = async (visaId: number, status: string) => {
+  const handleStatusUpdate = async (docId: number, status: string) => {
     try {
-      await updateStatus({ id: visaId, status }).unwrap();
+      await updateStatus({ id: docId, status }).unwrap();
       refetch();
-      alert("Statut mis à jour avec succès");
+      alert("Status updated successfully");
     } catch (err: any) {
-      alert(err.data?.message || "Erreur lors de la mise à jour");
+      alert(err.data?.message || "Error during update");
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return '#d4edda';
-      case 'REJECTED': return '#f8d7da';
-      case 'PENDING': return '#fff3cd';
-      case 'IN_PROGRESS': return '#cce5ff';
-      default: return '#f8f9fa';
+  const getStatusBadge = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'APPROVED':
+        return <span className="flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg"><CheckCircle className="w-3 h-3" /> Approved</span>;
+      case 'REJECTED':
+        return <span className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg"><AlertCircle className="w-3 h-3" /> Rejected</span>;
+      case 'PENDING':
+        return <span className="flex items-center gap-1 px-3 py-1.5 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg"><Clock className="w-3 h-3" /> Pending</span>;
+      default:
+        return <span className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"><Eye className="w-3 h-3" /> {status}</span>;
     }
   };
 
-  const getStatusTextColor = (status: string) => {
-    switch (status) {
-      case 'APPROVED': return '#155724';
-      case 'REJECTED': return '#721c24';
-      case 'PENDING': return '#856404';
-      case 'IN_PROGRESS': return '#004085';
-      default: return '#383d41';
-    }
-  };
+  const documents = visaData?.documents || [];
 
   return (
-    <div className="layout">
-      <Sidebar />
-      <div className="main">
-        <Navbar />
-        <div className="content">
-          <div className="page-header">
-            <h2>Gestion des Documents de Visa</h2>
-            <p>Gérez vos documents d'immigration avec suivi complet</p>
-          </div>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl">
+      {/* Header */}
+      <div>
+      <p className="text-indigo-600 text-[11px] font-black uppercase tracking-[4px] mb-1 flex items-center gap-2">
+          <FileText className="w-3.5 h-3.5" /> Documents
+        </p>
+        <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Visa Document Management</h1>
+        <p className="text-slate-400 font-medium text-base mt-1">Upload and manage your immigration documents to facilitate your mobility.</p>
+      </div>
 
-          {/* Filters */}
-          <div style={{ marginTop: "20px", marginBottom: "20px", display: "flex", gap: "15px", alignItems: "center" }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "4px" }}
-            >
-              <option value="">Tous les statuts</option>
-              <option value="PENDING">En attente</option>
-              <option value="IN_PROGRESS">En cours</option>
-              <option value="APPROVED">Approuvé</option>
-              <option value="REJECTED">Rejeté</option>
-            </select>
-            <button
-              onClick={() => setShowUploadForm(true)}
-              style={{
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}
-            >
-              + Télécharger Document
-            </button>
-          </div>
-
-          {/* Upload Form */}
-          {showUploadForm && (
-            <div style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              marginBottom: "20px"
-            }}>
-              <h3>Télécharger un Nouveau Document</h3>
-              <form onSubmit={handleUpload}>
-                <div style={{ display: "grid", gap: "15px", marginTop: "15px" }}>
-                  <div>
-                    <label>Type de Document:</label>
-                    <select
-                      value={documentType}
-                      onChange={(e) => setDocumentType(e.target.value)}
-                      style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
-                    >
-                      <option value="PASSPORT">Passeport</option>
-                      <option value="VISA">Visa</option>
-                      <option value="BIRTH_CERTIFICATE">Certificat de Naissance</option>
-                      <option value="POLICE_CERTIFICATE">Certificat de Police</option>
-                      <option value="MEDICAL_REPORT">Rapport Médical</option>
-                      <option value="COVER_LETTER">Lettre de Motivation</option>
-                      <option value="EMPLOYMENT_LETTER">Lettre d'Emploi</option>
-                      <option value="OTHER">Autre</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Fichier:</label>
-                    <input
-                      type="file"
-                      onChange={handleFileSelect}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      required
-                      style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
-                    />
-                    <small style={{ color: "#666" }}>Formats acceptés: PDF, DOC, DOCX, JPG, PNG</small>
-                  </div>
-                </div>
-                <div style={{ marginTop: "20px" }}>
-                  <button
-                    type="submit"
-                    disabled={isUploading || !selectedFile}
-                    style={{
-                      background: "#28a745",
-                      color: "white",
-                      border: "none",
-                      padding: "10px 20px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      marginRight: "10px"
-                    }}
-                  >
-                    {isUploading ? "Téléchargement..." : "Télécharger"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowUploadForm(false);
-                      setSelectedFile(null);
-                    }}
-                    style={{
-                      background: "#6c757d",
-                      color: "white",
-                      border: "none",
-                      padding: "10px 20px",
-                      borderRadius: "4px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Visa Documents Table */}
-          <div className="visa-table-container" style={{ marginTop: "20px", background: "white", padding: "20px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-            {isLoading && <p>Chargement...</p>}
-            {isError && <p>Erreur lors du chargement des documents</p>}
-
-            {!isLoading && visaData && visaData.documents && visaData.documents.length > 0 ? (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #eee", textAlign: "left" }}>
-                    <th style={{ padding: "10px" }}>ID</th>
-                    <th style={{ padding: "10px" }}>Type de Document</th>
-                    <th style={{ padding: "10px" }}>Statut Visa</th>
-                    <th style={{ padding: "10px" }}>Date de Dépôt</th>
-                    <th style={{ padding: "10px" }}>Date d'Expiration</th>
-                    <th style={{ padding: "10px" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visaData.documents.map((doc: any) => (
-                    <tr key={doc.id_demande_visa} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: "10px" }}>{doc.id_demande_visa}</td>
-                      <td style={{ padding: "10px", fontWeight: "bold" }}>{doc.type_document}</td>
-                      <td style={{ padding: "10px" }}>
-                        <select
-                          value={doc.statut}
-                          onChange={(e) => handleStatusUpdate(doc.id_demande_visa, e.target.value)}
-                          disabled={isUpdating}
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            border: "1px solid #ddd",
-                            backgroundColor: getStatusColor(doc.statut),
-                            color: getStatusTextColor(doc.statut),
-                            fontWeight: "bold",
-                            cursor: "pointer"
-                          }}
-                        >
-                          <option value="PENDING">En attente</option>
-                          <option value="IN_PROGRESS">En cours</option>
-                          <option value="APPROVED">Approuvé</option>
-                          <option value="REJECTED">Rejeté</option>
-                        </select>
-                      </td>
-                      <td style={{ padding: "10px" }}>
-                        {new Date(doc.date_depot).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td style={{ padding: "10px" }}>
-                        {doc.date_expiration ? new Date(doc.date_expiration).toLocaleDateString('fr-FR') : 'N/A'}
-                      </td>
-                      <td style={{ padding: "10px" }}>
-                        <button
-                          onClick={() => handleDelete(doc.id_demande_visa)}
-                          disabled={isDeleting}
-                          style={{
-                            background: "none",
-                            border: "1px solid red",
-                            color: "red",
-                            padding: "5px 10px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "0.85rem"
-                          }}
-                        >
-                          Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : !isLoading && (
-              <p>Aucun document trouvé. Téléchargez votre premier document en cliquant sur "+ Télécharger Document".</p>
-            )}
-          </div>
-
-          {/* Summary Stats */}
-          {visaData && (
-            <div style={{ marginTop: "30px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "15px" }}>
-              <div style={{ padding: "15px", background: "#cce5ff", borderRadius: "4px", textAlign: "center" }}>
-                <h4>Total Documents</h4>
-                <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{visaData.documents?.length || 0}</p>
-              </div>
-              <div style={{ padding: "15px", background: "#fff3cd", borderRadius: "4px", textAlign: "center" }}>
-                <h4>En Attente</h4>
-                <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{visaData.documents?.filter((d: any) => d.statut === 'PENDING')?.length || 0}</p>
-              </div>
-              <div style={{ padding: "15px", background: "#d4edda", borderRadius: "4px", textAlign: "center" }}>
-                <h4>Approuvés</h4>
-                <p style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{visaData.documents?.filter((d: any) => d.statut === 'APPROVED')?.length || 0}</p>
-              </div>
-            </div>
-          )}
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+          <p className="text-slate-400 text-xs font-bold mb-2 uppercase">Total Documents</p>
+          <p className="text-3xl font-black text-slate-900">{documents.length}</p>
         </div>
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+          <p className="text-slate-400 text-xs font-bold mb-2 uppercase flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</p>
+          <p className="text-3xl font-black text-amber-600">{documents.filter((d: any) => d.statut === 'PENDING').length}</p>
+        </div>
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+          <p className="text-slate-400 text-xs font-bold mb-2 uppercase flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</p>
+          <p className="text-3xl font-black text-emerald-600">{documents.filter((d: any) => d.statut === 'APPROVED').length}</p>
+        </div>
+        <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+          <p className="text-slate-400 text-xs font-bold mb-2 uppercase flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Rejected</p>
+          <p className="text-3xl font-black text-red-600">{documents.filter((d: any) => d.statut === 'REJECTED').length}</p>
+        </div>
+      </div>
+
+      {/* Upload button and filter */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <button
+          onClick={() => setShowUploadForm(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-black rounded-xl text-sm uppercase tracking-widest hover:bg-indigo-700 hover:-translate-y-0.5 transition-all shadow-lg"
+        >
+          <Upload className="w-4 h-4" /> Upload Document
+        </button>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-700 font-bold text-sm focus:outline-none focus:border-indigo-400"
+        >
+          <option value="">All Statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+
+      {/* Upload Form */}
+      {showUploadForm && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-6">Upload New Document</h2>
+          <form onSubmit={handleUpload} className="space-y-6">
+            <div>
+              <label className="block text-sm font-black text-slate-900 mb-2">Document Type</label>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-700 font-bold focus:outline-none focus:border-indigo-400"
+              >
+                <option value="PASSPORT">Passport</option>
+                <option value="VISA">Visa</option>
+                <option value="BIRTH_CERTIFICATE">Birth Certificate</option>
+                <option value="POLICE_CERTIFICATE">Police Certificate</option>
+                <option value="MEDICAL_REPORT">Medical Report</option>
+                <option value="COVER_LETTER">Cover Letter</option>
+                <option value="EMPLOYMENT_LETTER">Employment Letter</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-black text-slate-900 mb-2">Select a File</label>
+              <input
+                type="file"
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                required
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-700 font-bold focus:outline-none focus:border-indigo-400"
+              />
+              <p className="text-xs text-slate-400 font-bold mt-2">Accepted formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={isUploading || !selectedFile}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white font-black rounded-xl text-sm uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <Upload className="w-4 h-4" /> {isUploading ? "Uploading..." : "Upload"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadForm(false);
+                  setSelectedFile(null);
+                }}
+                className="px-6 py-3 bg-slate-200 text-slate-700 font-black rounded-xl text-sm uppercase tracking-widest hover:bg-slate-300 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Documents Table */}
+      <div className="bg-white border border-slate-100 rounded-[32px] shadow-sm overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 bg-slate-50">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight">My Documents</h3>
+          <p className="text-slate-400 text-xs font-bold">Uploaded immigration documents</p>
+        </div>
+
+        {isLoading ? (
+          <div className="py-20 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : documents.length === 0 ? (
+          <div className="py-24 flex flex-col items-center justify-center">
+            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-4">
+              <FileText className="w-10 h-10 text-slate-300" />
+            </div>
+            <p className="text-slate-400 font-black text-lg">No documents</p>
+            <p className="text-slate-300 text-sm">Click "Upload Document" to get started</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-600 uppercase tracking-widest">Type</th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-600 uppercase tracking-widest">File</th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-600 uppercase tracking-widest">Date</th>
+                  <th className="px-6 py-4 text-center text-xs font-black text-slate-600 uppercase tracking-widest">Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-black text-slate-600 uppercase tracking-widest">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {documents.map((doc: any) => (
+                  <tr key={doc.id_document} className="hover:bg-slate-50 transition-all">
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-lg uppercase">
+                        {doc.type_document}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-slate-900 text-sm">{doc.nom_fichier}</p>
+                      <p className="text-slate-400 text-xs">{(doc.taille_fichier / 1024).toFixed(2)} KB</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-slate-600 font-bold text-sm">
+                        {new Date(doc.date_upload).toLocaleDateString('fr-FR')}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(doc.statut)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDelete(doc.id_document)}
+                        disabled={isDeleting}
+                        className="flex items-center gap-1 ml-auto px-4 py-2.5 bg-red-50 text-red-600 font-black rounded-lg text-xs uppercase tracking-widest hover:bg-red-100 disabled:opacity-50 transition-all"
+                      >
+                        <Trash2 className="w-3 h-3" /> Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

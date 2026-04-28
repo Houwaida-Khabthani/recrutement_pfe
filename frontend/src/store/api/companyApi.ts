@@ -13,6 +13,12 @@ export const companyApi = baseApi.injectEndpoints({
       query: () => '/recruiters/profile',
       providesTags: ['Profile'],
     }),
+    // ✅ Get public company profile by ID
+    getCompanyById: builder.query<any, string>({
+      query: (id: string) => `/company/${id}`,
+      providesTags: ['CompanyProfile'],
+      transformResponse: (response: any) => response?.data || response,
+    }),
     updateProfile: builder.mutation<any, any>({
       query: (body) => ({
         url: '/company/profile',
@@ -34,6 +40,7 @@ export const {
   useGetDashboardQuery,
   useGetProfileQuery,
   useGetRecruiterProfileQuery,
+  useGetCompanyByIdQuery,
   useUpdateProfileMutation,
   useGetCompanyStatsQuery,
 } = companyApi;

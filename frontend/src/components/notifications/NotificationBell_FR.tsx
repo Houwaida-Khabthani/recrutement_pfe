@@ -207,17 +207,17 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
             <div>
               <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                {unreadCount > 0 ? `${unreadCount} non lue${unreadCount > 1 ? 's' : ''}` : 'À jour'}
               </p>
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-lg"
-                title="Mark all as read"
+                title="Marquer toutes comme lues"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
-                Mark all
+                Tout lire
               </button>
             )}
           </div>
@@ -233,8 +233,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
             ) : notifications.length === 0 ? (
               <div className="px-5 py-8 text-center">
                 <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-400 dark:text-slate-500">No notifications</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">You're all caught up!</p>
+                <p className="text-sm font-medium text-slate-400 dark:text-slate-500">Aucune notification</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Vous êtes à jour!</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -267,7 +267,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
                             <button
                               onClick={() => handleMarkAsRead(notif.id_notif)}
                               className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded transition-colors"
-                              title="Mark as read"
+                              title="Marquer comme lu"
                             >
                               <Check className="w-4 h-4" />
                             </button>
@@ -299,3 +299,154 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ userId }) => {
 };
 
 export default NotificationBell;
+
+  // Get icon for notification type
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'warning':
+        return <AlertTriangle className="w-4 h-4 text-amber-500" />;
+      case 'info':
+      default:
+        return <Info className="w-4 h-4 text-blue-500" />;
+    }
+  };
+
+  // Get background color for notification
+  const getTypeColor = (type: string, isRead: boolean) => {
+    if (isRead) {
+      return 'bg-slate-50 dark:bg-slate-800';
+    }
+    
+    switch (type) {
+      case 'success':
+        return 'bg-emerald-50 dark:bg-emerald-950/30';
+      case 'error':
+        return 'bg-red-50 dark:bg-red-950/30';
+      case 'warning':
+        return 'bg-amber-50 dark:bg-amber-950/30';
+      case 'info':
+      default:
+        return 'bg-blue-50 dark:bg-blue-950/30';
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Bell Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+      >
+        <Bell className="w-5 h-5 group-hover:scale-110 transition-transform" />
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1 animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Dropdown Panel */}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900">
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {unreadCount > 0 ? `${unreadCount} non lue${unreadCount > 1 ? 's' : ''}` : 'À jour'}
+              </p>
+            </div>
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllAsRead}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-lg"
+                title="Marquer toutes comme lues"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                Tout lire
+              </button>
+            )}
+          </div>
+
+          {/* Notifications List */}
+          <div className="max-h-96 overflow-y-auto">
+            {loading && notifications.length === 0 ? (
+              <div className="px-5 py-8 text-center text-slate-400">
+                <div className="inline-block animate-spin">
+                  <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full" />
+                </div>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-slate-400 dark:text-slate-500">Aucune notification</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Vous êtes à jour!</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {notifications.map((notif) => (
+                  <div
+                    key={notif.id_notif}
+                    className={`px-5 py-4 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer ${getTypeColor(notif.type, notif.lu === 1)}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className="mt-0.5 flex-shrink-0">
+                        {getTypeIcon(notif.type)}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-snug">
+                          {notif.message}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {format(new Date(notif.date), 'dd MMM HH:mm')}
+                        </p>
+                      </div>
+
+                      {/* Unread indicator & Action */}
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        {notif.lu === 0 && (
+                          <>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                            <button
+                              onClick={() => handleMarkAsRead(notif.id_notif)}
+                              className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded transition-colors"
+                              title="Marquer comme lu"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {notifications.length > 0 && (
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+              <a
+                href="/admin/notifications"
+                className="text-center block text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 py-2 transition-colors"
+              >
+                Voir toutes les notifications →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default NotificationBell;
+

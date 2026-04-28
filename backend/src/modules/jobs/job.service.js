@@ -5,8 +5,12 @@ exports.getAllJobs = async (filters) => {
 };
 
 exports.getJobDetails = async (id) => {
-  const job = await Job.findById(id);
-  if (!job) throw new Error("Offre non trouvée");
+  const job = await Job.findOpenById(id);
+  if (!job) {
+    const error = new Error("Offre non trouvée");
+    error.statusCode = 404;
+    throw error;
+  }
   return job;
 };
 
@@ -69,7 +73,7 @@ exports.deleteJob = async (id, userId) => {
   const companyId = await Job.getCompanyIdByUser(userId);
   if (job.id_entreprise !== companyId) throw new Error("Accès non autorisé");
 
-  return await Job.delete(id);
+  return await Job.deactivate(id);
 };
 
 exports.getMyJobs = async (userId) => {

@@ -19,10 +19,11 @@ exports.getUnreadCount = async (id_user) => {
   return rows[0]?.unreadCount || 0;
 };
 
-// Create notification
+// Create notification with title and message
 exports.createNotification = async (data) => {
-  const { message, type, id_user } = data;
+  const { title, message, type, id_user } = data;
   const [result] = await notificationModel.create({
+    title: title || message?.substring(0, 100) || 'Notification',
     message,
     type: type || "info",
     id_user,
@@ -30,11 +31,13 @@ exports.createNotification = async (data) => {
 
   const createdNotification = {
     id_notif: result?.insertId || null,
+    title: title || message?.substring(0, 100) || 'Notification',
     message,
     type: type || "info",
     id_user,
     lu: 0,
     date: new Date().toISOString(),
+    created_at: new Date().toISOString(),
   };
 
   try {

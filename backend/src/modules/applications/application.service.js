@@ -15,6 +15,20 @@ exports.applyToJob = async (userId, data) => {
     if (!job) throw new Error("Offre non trouvée");
     if (job.statut !== 'OUVERT') throw new Error(`Cette offre n'accepte plus de candidatures (statut: ${job.statut})`);
 
+    // Check if user already has an application for this job (unless rejected)
+    const [existingApps] = await pool.query(
+      `SELECT id_candidature, statut FROM candidature WHERE id_user = ? AND id_offre = ?`,
+      [userId, data.id_offre]
+    );
+    
+    if (existingApps.length > 0) {
+      const existingApp = existingApps[0];
+      // Allow re-apply only if previously rejected
+      if (existingApp.statut !== 'REJECTED') {
+        throw new Error('Vous avez déjà postulé à cette offre. Vous pouvez postuler à nouveau seulement après un rejet.');
+      }
+    }
+
     console.log('[APPLYTOJOB] About to create application with:', { id_user: userId, ...data });
     const result = await Application.create({ ...data, id_user: userId });
     console.log('[APPLYTOJOB] Application created successfully:', result);

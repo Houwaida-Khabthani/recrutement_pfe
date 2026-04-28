@@ -3,7 +3,7 @@ const db = require("../../config/db");
 // Get all notifications for a user
 exports.getByUser = (id_user) => {
   return db.query(
-    "SELECT * FROM notification WHERE id_user = ? ORDER BY date DESC",
+    "SELECT * FROM notification WHERE id_user = ? ORDER BY created_at DESC, date DESC",
     [id_user]
   );
 };
@@ -11,7 +11,7 @@ exports.getByUser = (id_user) => {
 // Get recent notifications (latest 5)
 exports.getRecentByUser = (id_user, limit = 5) => {
   return db.query(
-    "SELECT * FROM notification WHERE id_user = ? ORDER BY date DESC LIMIT ?",
+    "SELECT * FROM notification WHERE id_user = ? ORDER BY created_at DESC, date DESC LIMIT ?",
     [id_user, limit]
   );
 };
@@ -24,11 +24,11 @@ exports.getUnreadCount = (id_user) => {
   );
 };
 
-// Create a notification
+// Create a notification with title and message
 exports.create = (data) => {
   return db.query(
-    "INSERT INTO notification (message, type, date, id_user, lu) VALUES (?, ?, NOW(), ?, 0)",
-    [data.message, data.type, data.id_user]
+    "INSERT INTO notification (title, message, type, date, created_at, id_user, lu) VALUES (?, ?, ?, NOW(), NOW(), ?, 0)",
+    [data.title || data.message?.substring(0, 100) || 'Notification', data.message, data.type, data.id_user]
   );
 };
 

@@ -28,6 +28,9 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const sanitizeMiddleware = require("./middlewares/sanitize.middleware");
+app.use(sanitizeMiddleware);
+
 /* ========================
    STATIC FILES
 ======================== */
@@ -40,6 +43,27 @@ console.log("Serving uploads from:", UPLOADS_PATH);
 ======================== */
 
 app.use("/api", routes);
+
+/* ========================
+   ROOT ROUTE
+======================== */
+
+app.get("/", (req, res) => {
+  res.json({
+    message: "PFE Recruitment API Server",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      auth: "/api/auth",
+      users: "/api/users",
+      jobs: "/api/jobs",
+      applications: "/api/applications",
+      companies: "/api/companies",
+      interviews: "/api/interviews",
+      visas: "/api/visas"
+    }
+  });
+});
 
 /* ========================
    ERROR HANDLING

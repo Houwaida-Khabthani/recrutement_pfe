@@ -1,6 +1,8 @@
 ﻿import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { useRegisterMutation } from "../../store/api/authApi";
+import { validateRegisterForm } from "../../utils/formValidation";
+import { useFormValidation } from "../../hooks/useFormValidation";
 
 function Register() {
   const params = useParams();
@@ -9,6 +11,7 @@ function Register() {
 
   const [form, setForm] = useState<any>({});
   const [registerUser, { isLoading }] = useRegisterMutation();
+  const { errors, setErrors, resetErrors } = useFormValidation();
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -23,27 +26,12 @@ function Register() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    resetErrors();
 
-    if (form.password !== form.confirmPassword) {
-      return alert("Les mots de passe ne correspondent pas");
-    }
-
-    if (urlRole === "CANDIDAT") {
-      if (!form.nom?.trim()) {
-        return alert("Le nom est obligatoire");
-      }
-    } else if (urlRole === "ENTREPRISE") {
-      if (!form.nom_entreprise?.trim()) {
-        return alert("Le nom d'entreprise est obligatoire");
-      }
-    }
-
-    if (!form.email?.trim()) {
-      return alert("L'email est obligatoire");
-    }
-
-    if (!form.password?.trim()) {
-      return alert("Le mot de passe est obligatoire");
+    const validationErrors = validateRegisterForm(form, urlRole);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
 
     try {
@@ -95,10 +83,12 @@ function Register() {
             <>
               <div className="form-group">
                 <input name="nom" placeholder="Nom complet" onChange={handleChange} required />
+                {errors.nom && <span className="error-text">{errors.nom}</span>}
               </div>
 
               <div className="form-group">
                 <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
+                {errors.email && <span className="error-text">{errors.email}</span>}
               </div>
 
               <div className="form-group">
@@ -112,6 +102,7 @@ function Register() {
 
               <div className="form-group">
                 <input type="date" name="date_naissance" onChange={handleChange} required />
+                {errors.date_naissance && <span className="error-text">{errors.date_naissance}</span>}
               </div>
 
               <div className="form-group">
@@ -128,6 +119,7 @@ function Register() {
             <>
               <div className="form-group">
                 <input name="nom_entreprise" placeholder="Nom de l'entreprise" onChange={handleChange} required />
+                {errors.nom_entreprise && <span className="error-text">{errors.nom_entreprise}</span>}
               </div>
 
               <div className="form-group">
@@ -136,6 +128,7 @@ function Register() {
 
               <div className="form-group">
                 <input name="secteur" placeholder="Secteur d'activité" onChange={handleChange} required />
+                {errors.secteur && <span className="error-text">{errors.secteur}</span>}
               </div>
 
               <div className="form-group">
@@ -150,10 +143,12 @@ function Register() {
 
           <div className="form-group">
             <input type="password" name="password" placeholder="Mot de passe" onChange={handleChange} required />
+            {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
           <div className="form-group">
             <input type="password" name="confirmPassword" placeholder="Confirmer le mot de passe" onChange={handleChange} required />
+            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
           </div>
 
           <button type="submit" className="btn-primary" disabled={isLoading}>

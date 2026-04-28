@@ -59,7 +59,6 @@ const CompanyJobs = () => {
     description: '',
     salaire: '',
     experience: 'JUNIOR',
-    date_expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     statut: 'OUVERT'
   });
 
@@ -87,7 +86,6 @@ const CompanyJobs = () => {
       description: '',
       salaire: '',
       experience: 'JUNIOR',
-      date_expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       statut: 'OUVERT'
     });
     setModalType('add');
@@ -103,7 +101,6 @@ const CompanyJobs = () => {
       description: job.description,
       salaire: job.salaire ? String(job.salaire) : '',
       experience: job.experience,
-      date_expiration: job.date_expiration ? new Date(job.date_expiration).toISOString().split('T')[0] : '',
       statut: job.statut
     });
     setModalType('edit');
@@ -119,19 +116,24 @@ const CompanyJobs = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Coerce types to match backend Joi validation
+      const salaryValue = formData.salaire !== '' ? Number(formData.salaire) : null;
+
       const payload = {
-        ...formData,
-        // salaire must be a number or null (not a string)
-        salaire: formData.salaire !== '' ? Number(formData.salaire) : null,
-        // Ensure date_expiration is a valid ISO string or null
-        date_expiration: formData.date_expiration || null,
+        titre: formData.titre.trim(),
+        type_contrat: formData.type_contrat,
+        localisation: formData.localisation.trim(),
+        description: formData.description.trim(),
+        salaire: Number.isNaN(salaryValue as number) ? null : salaryValue,
+        experience: formData.experience,
+        ...(modalType === 'edit' ? { statut: formData.statut } : {}),
       };
+
       if (modalType === 'add') {
         await createJob(payload).unwrap();
       } else if (modalType === 'edit') {
         await updateJob({ id: selectedJob.id_offre, ...payload }).unwrap();
       }
+
       setShowModal(false);
     } catch (err: any) {
       alert(err.data?.message || err.data?.error || 'Action failed. Check the form fields (title ≥5 chars, description ≥20 chars).');
@@ -327,12 +329,12 @@ const CompanyJobs = () => {
                     <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
                        {modalType === 'add' && 'Create New Job Listing'}
                        {modalType === 'edit' && 'Modify Job Posting'}
-                       {modalType === 'delete' && 'Verify Deletion'}
+                       {modalType === 'delete' && 'Deactivate Job Posting'}
                     </h2>
                     <p className="text-slate-400 text-sm font-medium">
                        {modalType === 'add' && 'Publish a new position on the platform'}
                        {modalType === 'edit' && 'Update existing position requirements'}
-                       {modalType === 'delete' && 'This action cannot be undone'}
+                       {modalType === 'delete' && 'The job will remain in the database but will no longer be visible to candidates'}
                     </p>
                  </div>
                  <button 
@@ -365,7 +367,7 @@ const CompanyJobs = () => {
                            disabled={isDeleting}
                            className="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl shadow-xl shadow-red-200 hover:bg-red-700 transition-all uppercase tracking-widest text-xs disabled:opacity-50"
                          >
-                           {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                           {isDeleting ? 'Deactivating...' : 'Confirm Deactivate'}
                          </button>
                       </div>
                    </div>
@@ -429,15 +431,6 @@ const CompanyJobs = () => {
                                <option value="INTERMEDIATE">Intermediate (2-5 years)</option>
                                <option value="SENIOR">Senior (5+ years)</option>
                             </select>
-                         </div>
-                         <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Expiry Date</label>
-                            <input 
-                              type="date" 
-                              className="w-full bg-slate-50 border-transparent focus:border-slate-900 focus:ring-0 rounded-2xl px-5 py-4 text-sm font-bold"
-                              value={formData.date_expiration}
-                              onChange={(e) => setFormData({...formData, date_expiration: e.target.value})}
-                            />
                          </div>
                          {modalType === 'edit' && (
                             <div className="space-y-2">

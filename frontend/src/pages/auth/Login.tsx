@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux";
 import { setCredentials } from "../../store/slices/authSlice";
 import { useLoginMutation } from "../../store/api/authApi";
 import { UserRole } from "../../types/roles";
+import { validateLoginForm } from "../../utils/formValidation";
+import { useFormValidation } from "../../hooks/useFormValidation";
 
 function Login() {
   const navigate = useNavigate();
@@ -15,9 +17,17 @@ function Login() {
   const [password, setPassword] = useState("");
 
   const [login, { isLoading }] = useLoginMutation();
+  const { errors, setErrors, resetErrors } = useFormValidation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    resetErrors();
+
+    const validationErrors = validateLoginForm({ email, password });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     try {
       const res = await login({ email, password }).unwrap();
@@ -43,7 +53,23 @@ function Login() {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      alert(error?.data?.message || "Email ou mot de passe incorrect");
+      
+      // Extract meaningful error message
+      const errorMessage = 
+        error?.data?.message || 
+        error?.message || 
+        "Email ou mot de passe incorrect";
+      
+      // Log the full error object for debugging
+      if (error?.status === 500) {
+        console.error('[LOGIN] Server error details:', {
+          status: error?.status,
+          data: error?.data,
+          message: error?.message
+        });
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -79,6 +105,7 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+            {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
           <div className="form-group">
@@ -89,6 +116,7 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
           <button type="submit" className="btn-primary" disabled={isLoading}>

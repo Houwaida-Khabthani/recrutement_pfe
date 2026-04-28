@@ -11,6 +11,24 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// ✅ PUBLIC - Get company by ID
+exports.getCompanyById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.error(`[COMPANY CONTROLLER] getCompanyById for company ID ${id}`);
+    const data = await service.getCompanyById(id);
+    
+    if (!data) {
+      return res.status(404).json({ success: false, message: 'Company not found' });
+    }
+    
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error(`[COMPANY CONTROLLER ERROR] getCompanyById: ${error.message}`);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.updateProfile = async (req, res) => {
   try {
     console.error(`[COMPANY CONTROLLER] updateProfile for user ID ${req.user.id}`);

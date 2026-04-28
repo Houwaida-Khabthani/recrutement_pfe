@@ -2,7 +2,7 @@ const pool = require("../../config/db");
 
 const Job = {
   findAll: async (filters = {}) => {
-    let query = "SELECT o.*, c.nom as company_name, c.logo as company_logo FROM offre o JOIN company c ON o.id_entreprise = c.id_company WHERE 1=1";
+    let query = "SELECT o.*, c.nom as company_name, c.logo as company_logo FROM offre o JOIN company c ON o.id_entreprise = c.id_company WHERE (o.statut = 'OUVERT' OR o.statut = 'Active')";
     const params = [];
 
     if (filters.search) {
@@ -26,6 +26,14 @@ const Job = {
   findById: async (id) => {
     const [rows] = await pool.query(
       "SELECT o.*, c.nom as company_name, c.logo as company_logo, c.description as company_description FROM offre o JOIN company c ON o.id_entreprise = c.id_company WHERE o.id_offre = ?",
+      [id]
+    );
+    return rows[0];
+  },
+
+  findOpenById: async (id) => {
+    const [rows] = await pool.query(
+      "SELECT o.*, c.nom as company_name, c.logo as company_logo, c.description as company_description FROM offre o JOIN company c ON o.id_entreprise = c.id_company WHERE o.id_offre = ? AND (o.statut = 'OUVERT' OR o.statut = 'Active')",
       [id]
     );
     return rows[0];
@@ -73,6 +81,11 @@ const Job = {
 
   delete: async (id) => {
     const [result] = await pool.query("DELETE FROM offre WHERE id_offre = ?", [id]);
+    return result.affectedRows > 0;
+  },
+
+  deactivate: async (id) => {
+    const [result] = await pool.query("UPDATE offre SET statut = 'FERME' WHERE id_offre = ?", [id]);
     return result.affectedRows > 0;
   },
 

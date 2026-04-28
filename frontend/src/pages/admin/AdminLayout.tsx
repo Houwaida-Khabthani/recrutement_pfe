@@ -9,11 +9,11 @@ import Navbar from '../../components/common/Navbar';
 
 const sidebarItems = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard', color: 'text-blue-400' },
-  { to: '/admin/users', icon: Users, label: 'Utilisateurs', color: 'text-violet-400' },
+  { to: '/admin/users', icon: Users, label: 'Users', color: 'text-violet-400' },
   { to: '/admin/jobs', icon: Briefcase, label: 'Jobs', color: 'text-amber-400' },
-  { to: '/admin/pending-companies', icon: Building2, label: 'Entreprises en attente', color: 'text-emerald-400' },
-  { to: '/admin/applications', icon: FileText, label: 'Candidatures', color: 'text-amber-400' },
-  { to: '/admin/statistics', icon: BarChart3, label: 'Statistiques', color: 'text-pink-400' },
+  { to: '/admin/pending-companies', icon: Building2, label: 'Pending Companies', color: 'text-emerald-400' },
+  { to: '/admin/applications', icon: FileText, label: 'Applications', color: 'text-amber-400' },
+  { to: '/admin/statistics', icon: BarChart3, label: 'Statistics', color: 'text-pink-400' },
 ];
 
 const AdminLayout = () => {

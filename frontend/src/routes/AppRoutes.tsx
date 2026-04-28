@@ -15,9 +15,10 @@ import CandidateDashboard from "../pages/candidate/Dashboard";
 import CandidateProfile from "../pages/candidate/Profile";
 import CandidateJobs from "../pages/candidate/Jobs";
 import CandidateJobDetails from "../pages/candidate/JobDetails";
+import CandidateCompanyProfile from "../pages/candidate/CompanyProfile";
 import CandidateApplications from "../pages/candidate/Applications";
 import CandidateApplicationDetails from "../pages/candidate/ApplicationDetails";
-import CandidateVisa from "../pages/candidate/Visa";
+import CandidateVisaManagement from "../pages/candidate/VisaManagement";
 import Settings from "../pages/candidate/Settings";
 import MockInterviews from "../pages/candidate/MockInterviews";
 
@@ -71,9 +72,10 @@ const AppRoutes = () => {
             <Route path="profile" element={<CandidateProfile />} />
             <Route path="jobs" element={<CandidateJobs />} />
             <Route path="jobs/:id" element={<CandidateJobDetails />} />
+            <Route path="company/:id" element={<CandidateCompanyProfile />} />
             <Route path="applications" element={<CandidateApplications />} />
             <Route path="applications/:id" element={<CandidateApplicationDetails />} />
-            <Route path="visa" element={<CandidateVisa />} />
+            <Route path="visa" element={<CandidateVisaManagement />} />
             <Route path="settings" element={<Settings />} />
             <Route path="mock-interviews" element={<MockInterviews />} />
           </Route>
